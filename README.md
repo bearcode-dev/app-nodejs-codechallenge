@@ -57,10 +57,6 @@ npm run start:dev
 
 ### Verificar Instalación
 ```bash
-# Health checks
-curl http://localhost:3000/health  # Transaction Service
-curl http://localhost:3001/health  # Anti-Fraud Service
-
 # Crear una transacción de prueba
 curl -X POST http://localhost:3000/transactions \
   -H "Content-Type: application/json" \
@@ -171,58 +167,74 @@ npm run check:fix             # Lint + format (automático)
 ```
 app-nodejs-codechallenge/
 ├── apps/
-│   ├── transaction-service/         # Servicio principal de transacciones
+│   ├── transaction-service/
 │   │   └── src/
-│   │       ├── domain/              # Entidades y lógica de negocio
-│   │       │   ├── entities/        # Transaction, TransactionStatus
-│   │       │   ├── repositories/    # Interfaces de repositorios
-│   │       │   └── value-objects/   # Objetos de valor inmutables
-│   │       ├── application/         # Casos de uso
-│   │       │   ├── use-cases/       # CreateTransaction, GetTransaction
-│   │       │   └── dto/             # Data Transfer Objects
-│   │       ├── infrastructure/      # Implementaciones técnicas
-│   │       │   ├── database/        # Drizzle ORM, schemas, repositories
-│   │       │   ├── kafka/           # Producers, consumers, eventos
-│   │       │   └── cache/           # Redis adapter
-│   │       ├── presentation/        # Capa de API
-│   │       │   ├── controllers/     # REST endpoints
-│   │       │   └── dto/             # Request/Response DTOs
-│   │       └── config/              # Configuración de NestJS
-│   │
-│   └── anti-fraud-service/          # Servicio de validación anti-fraude
+│   │       ├── application/
+│   │       │   └── use-cases/
+│   │       ├── config/
+│   │       ├── domain/
+│   │       │   ├── entities/
+│   │       │   ├── ports/
+│   │       │   ├── repositories/
+│   │       │   └── value-objects/
+│   │       ├── infrastructure/
+│   │       │   ├── database/
+│   │       │   ├── messaging/
+│   │       │   └── repositories/
+│   │       └── presentation/
+│   │           ├── controllers/
+│   │           └── dtos/
+│   └── anti-fraud-service/
+│       ├── scripts/
 │       └── src/
-│           ├── domain/              # Motor de reglas
-│           │   ├── entities/        # FraudRule, RuleExecution
-│           │   ├── services/        # FraudEvaluator
-│           │   └── repositories/    # Interfaces
-│           ├── application/         # Evaluación de transacciones
-│           │   └── use-cases/       # EvaluateTransaction
-│           ├── infrastructure/      # Implementaciones
-│           │   ├── database/        # Schemas, repositories
-│           │   └── kafka/           # Consumers, producers
-│           └── config/              # Configuración
-│
+│           ├── application/
+│           │   └── use-cases/
+│           ├── config/
+│           ├── domain/
+│           │   ├── entities/
+│           │   ├── ports/
+│           │   ├── repositories/
+│           │   ├── services/
+│           │   └── types/
+│           └── infrastructure/
+│               ├── database/
+│               ├── mappers/
+│               ├── messaging/
+│               └── repositories/
 ├── libs/
-│   ├── common/                      # Código compartido
-│   │   ├── utils/                   # Helpers y utilidades
-│   │   ├── exceptions/              # Excepciones personalizadas
-│   │   └── interfaces/              # Interfaces comunes
-│   └── observability/               # Telemetría y monitoreo
-│       ├── logging/                 # Pino logger configurado
-│       ├── tracing/                 # OpenTelemetry setup
-│       └── metrics/                 # Métricas de aplicación
-│
-├── config/                          # Configuración global
-│   ├── drizzle.config.ts           # ORM configuration
-│   └── jest.config.js              # Test configuration
-│
+│   ├── common/
+│   │   └── src/
+│   │       ├── database/
+│   │       │   └── schemas/
+│   │       ├── events/
+│   │       ├── exceptions/
+│   │       │   └── filters/
+│   │       ├── interceptors/
+│   │       ├── kafka/
+│   │       ├── redis/
+│   │       └── types/
+│   └── observability/
+│       └── src/
+│           ├── adapters/
+│           ├── kafka/
+│           ├── logging/
+│           ├── ports/
+│           └── tracing/
+├── config/
+│   └── database/
+├── drizzle/
+│   └── meta/
+├── docs/
+│   ├── collection/
+│   └── diagrams/
+├── observability/
+│   ├── grafana/
+│   │   ├── dashboards/
+│   │   └── provisioning/
+│   └── tempo/
 ├── test/
-│   └── api/                        # Tests de integración
-│       └── test-transaction-api.sh
-│
-├── docs/                           # Documentación técnica
-├── observability/                  # Dashboards y configuración
-└── docker-compose.yml              # Infraestructura local
+│   └── api/
+└── docker-compose.yml
 ```
 
 ### Variables de Entorno
@@ -268,10 +280,8 @@ Every transaction with a value greater than 1000 should be rejected.
 **Transaction Service (3000):**
 - `POST /transactions` - Crear transacción
 - `GET /transactions/:id` - Obtener transacción por ID
-- `GET /health` - Health check
 
 **Anti-Fraud Service (3001):**
-- `GET /health` - Health check
 
 **Eventos Kafka:**
 - `transaction-created` → `transaction-approved/rejected`

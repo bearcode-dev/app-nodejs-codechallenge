@@ -142,7 +142,6 @@ graph TD
 #### **Dashboards y Visualización**
 - **Grafana**: Métricas en tiempo real y dashboards customizables
 - **Tempo**: Tracing distribuido para debugging de requests complejos
-- **Health Checks**: Endpoints dedicados para monitoreo de servicios
 
 #### **Alerting y Error Tracking**
 - **Sentry**: Captura automática de errores en producción
