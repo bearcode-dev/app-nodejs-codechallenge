@@ -35,7 +35,7 @@ async function seedDefaultRules() {
             },
             action: FraudAction.REVIEW,
             priority: 50,
-            isActive: false, // Desactivada por defecto
+            isActive: false, // Desactivada por defecto (activar manualmente si se requiere)
         },
         {
             name: 'Weekend Transfer Limit',

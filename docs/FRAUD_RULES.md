@@ -4,23 +4,23 @@ Sistema configurable para validar transacciones dinámicamente sin código hardc
 
 ## 🎯 Características Principales
 
-- **Sistema extensible** de reglas configurables
-- **AMOUNT_THRESHOLD** (único requerido por el reto)
-- **5 tipos adicionales** demostrativos de extensibilidad
-- **Sistema de prioridades** para resolución de conflictos
-- **Gestión vía base de datos** (sin APIs REST)
-- **Auditoría completa** de todas las evaluaciones
+- **Regla Obligatoria**: `AMOUNT_THRESHOLD` (Única requerida por el reto).
+- **Extensibilidad**: Se incluyen otros tipos de reglas únicamente de forma **demostrativa**.
+- **Configurabilidad**: Aunque el reto pedía un monto fijo (>1000), se implementó de forma configurable para permitir flexibilidad futura.
+- **Sistema de prioridades**: Para resolución de conflictos entre múltiples reglas.
+- **Gestión vía base de datos**: Sin necesidad de cambios en el código para ajustar umbrales.
+- **Auditoría completa**: Registro de todas las evaluaciones realizadas.
 
 ## 🔧 Tipos de Reglas
 
-| Tipo | Descripción | Estado | Ejemplo de Condición |
-|------|-------------|--------|----------------------|
-| `AMOUNT_THRESHOLD` | **Umbral de monto (REQUERIDO)** | ✅ Configurable | `{"operator": "gt", "value": 1000}` |
-| `DAILY_LIMIT` | Límite diario | 🚧 Demo (pendiente) | `{"maxAmount": 5000, "maxTransactions": 10}` |
-| `VELOCITY_CHECK` | Detección de velocidad | 🚧 Demo (pendiente) | `{"maxTransactions": 5, "timeWindowMinutes": 30}` |
-| `ACCOUNT_BLACKLIST` | Lista negra | ✅ Implementado | `{"accounts": ["uuid1", "uuid2"]}` |
-| `TRANSFER_TYPE_LIMIT` | Límite por tipo | ✅ Implementado | `{"transferTypeId": 2, "maxAmount": 500}` |
-| `TIME_BASED` | Restricción horaria | ✅ Implementado | `{"allowedHours": {"start": 8, "end": 18}}` |
+| Tipo | Descripción | Importancia | Ejemplo de Condición |
+|------|-------------|------------|----------------------|
+| `AMOUNT_THRESHOLD` | **Umbral de monto** | ⭐ **REQUERIDA** | `{"operator": "gt", "value": 1000}` |
+| `DAILY_LIMIT` | Límite diario | 🧪 Demo | `{"maxAmount": 5000, "maxTransactions": 10}` |
+| `VELOCITY_CHECK` | Detección de velocidad | 🧪 Demo | `{"maxTransactions": 5, "timeWindowMinutes": 30}` |
+| `ACCOUNT_BLACKLIST` | Lista negra | 🧪 Demo | `{"accounts": ["uuid1", "uuid2"]}` |
+| `TRANSFER_TYPE_LIMIT` | Límite por tipo | 🧪 Demo | `{"transferTypeId": 2, "maxAmount": 500}` |
+| `TIME_BASED` | Restricción horaria | 🧪 Demo | `{"allowedHours": {"start": 8, "end": 18}}` |
 
 ## 🎬 Acciones
 

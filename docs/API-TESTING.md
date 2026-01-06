@@ -49,7 +49,7 @@ El script `test/api/test-transaction-api.sh` cubre:
 |----------------------|----------------|---------|
 | < 1000 | PENDING → APPROVED | Normal |
 | 1001 - 5000 | PENDING → REJECTED | Alto riesgo |
-| > 5000 | PENDING → REVIEW | Muy alto - requiere revisión |
+| > 5000 | PENDING → REVIEW | Muy alto - requiere revisión (Regla desactivada por defecto) |
 
 ## Pruebas Manuales con curl
 
@@ -59,8 +59,8 @@ El script `test/api/test-transaction-api.sh` cubre:
 curl -X POST http://localhost:3000/transactions \
   -H "Content-Type: application/json" \
   -d '{
-    "accountExternalIdDebit": "acc-001",
-    "accountExternalIdCredit": "acc-002",
+    "accountExternalIdDebit": "550e8400-e29b-41d4-a716-446655440000",
+    "accountExternalIdCredit": "550e8400-e29b-41d4-a716-446655440001",
     "tranferTypeId": 1,
     "value": 500
   }'

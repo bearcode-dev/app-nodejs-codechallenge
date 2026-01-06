@@ -24,9 +24,9 @@ Sistema de procesamiento de transacciones con validación anti-fraude usando mic
 ## Inicio Rápido
 
 ### Prerrequisitos
-- **Node.js 18+**
+- **Node.js 20+**
 - **Docker & Docker Compose**
-- **PostgreSQL** (opcional, se puede usar Docker)
+- **PostgreSQL 14+** (incluido en Docker Compose)
 
 ### Instalación y Ejecución
 
@@ -42,22 +42,19 @@ npm install
 cp .env.example .env
 # Editar .env con tus configuraciones
 
-# 4. Levantar infraestructura externa (Docker)
-docker-compose up -d
+# 4. Levantar infraestructura y servicios (Docker)
+# Esto inicializará la base de datos y cargará las reglas automáticamente
+docker-compose up --build -d
 
-# 5. Inicializar base de datos
-npm run db:push
-
-# 6. Cargar reglas de anti-fraude por defecto
-npm run seed:fraud-rules
-
-# 7. Iniciar servicios
-npm run start:dev
+# 5. (Opcional) Si ejecutas localmente sin Docker Compose:
+# npm run db:push
+# npm run seed:fraud-rules
+# npm run start:dev
 ```
 
 ### Verificar Instalación
 ```bash
-# Crear una transacción de prueba
+# Crear una transacción de prueba (UUIDs válidos requeridos)
 curl -X POST http://localhost:3000/transactions \
   -H "Content-Type: application/json" \
   -d '{
@@ -73,7 +70,7 @@ curl -X POST http://localhost:3000/transactions \
 |----------|-----|-------------|
 | **Transaction Service** | http://localhost:3000 | API de transacciones |
 | **Anti-Fraud Service** | http://localhost:3001 | Validación anti-fraude |
-| **Kafka UI** | http://localhost:9000 | Monitor de mensajes |
+| **Kafka UI** | http://localhost:9000 | Monitor de mensajes (Kafka 2.5/5.5.3) |
 | **Grafana** | http://localhost:3002 | Dashboards (admin/admin) |
 
 ---
@@ -84,8 +81,8 @@ curl -X POST http://localhost:3000/transactions \
 ![Arquitectura](docs/diagrams/architecture-overview-jsoncrack.jpeg)
 
 ### Microservicios
-- **Transaction Service** (3000): Gestión de transacciones + eventos Kafka
-- **Anti-Fraud Service** (3001): Motor de reglas configurables (Umbral de monto prioritario) + auditoría
+- **Transaction Service** (3000): Gestión de transacciones + eventos Kafka.
+- **Anti-Fraud Service** (3001): Validación de reglas de negocio. Incluye la **regla obligatoria de umbral de monto (>1000)** y un motor extensible para reglas adicionales (demo).
 
 ### Patrones Implementados
 - **Hexagonal Architecture**: Domain, Application, Infrastructure, Presentation
@@ -139,10 +136,15 @@ npm run test:e2e
 # Consultar transacción (Verificar estado)
 curl http://localhost:3000/transactions/{transactionExternalId}
 
-# Crear transacción
+# Crear transacción (Usar UUIDs reales)
 curl -X POST http://localhost:3000/transactions \
   -H "Content-Type: application/json" \
-  -d '{"accountExternalIdDebit": "acc-001", "accountExternalIdCredit": "acc-002", "tranferTypeId": 1, "value": 500}'
+  -d '{
+    "accountExternalIdDebit": "550e8400-e29b-41d4-a716-446655440000",
+    "accountExternalIdCredit": "550e8400-e29b-41d4-a716-446655440001",
+    "tranferTypeId": 1,
+    "value": 500
+  }'
 ```
 
 ---
@@ -242,35 +244,36 @@ Ver [.env.example](.env.example) para configuración completa.
 
 ---
 
-# Problem
+# El Problema
 
-Every time a financial transaction is created it must be validated by our anti-fraud microservice and then the same service sends a message back to update the transaction status.
-For now, we have only three transaction statuses:
+Cada vez que se crea una transacción financiera, esta debe ser validada por nuestro microservicio anti-fraude y luego el mismo servicio envía un mensaje de vuelta para actualizar el estado de la transacción.
+
+Por ahora, solo tenemos tres estados de transacción:
 
 <ol>
-  <li>pending</li>
-  <li>approved</li>
-  <li>rejected</li>  
+  <li>pending (pendiente)</li>
+  <li>approved (aprobado)</li>
+  <li>rejected (rechazado)</li>  
 </ol>
 
-Every transaction with a value greater than 1000 should be rejected.
+Cada transacción con un valor superior a 1000 debe ser rechazada.
 
 ```mermaid
   flowchart LR
-    Transaction -- Save Transaction with pending Status --> transactionDatabase[(Database)]
-    Transaction --Send transaction Created event--> Anti-Fraud
-    Anti-Fraud -- Send transaction Status Approved event--> Transaction
-    Anti-Fraud -- Send transaction Status Rejected event--> Transaction
-    Transaction -- Update transaction Status event--> transactionDatabase[(Database)]
+    Transaction -- Guarda Transacción con estado pending --> transactionDatabase[(Base de Datos)]
+    Transaction --Envía evento TransactionCreated--> Anti-Fraud
+    Anti-Fraud -- Envía evento TransactionApproved--> Transaction
+    Anti-Fraud -- Envía evento TransactionRejected--> Transaction
+    Transaction -- Actualiza estado de transacción --> transactionDatabase[(Base de Datos)]
 ```
 
-# Tech Stack
+# Stack Tecnológico
 
 | Categoría | Tecnología |
 |-----------|-----------|
-| **Backend** | Node.js 18+ · NestJS 11 · TypeScript |
+| **Backend** | Node.js 20+ · NestJS 11 · TypeScript |
 | **Base de Datos** | PostgreSQL 14 · Drizzle ORM |
-| **Mensajería** | Apache Kafka 2.8 · Redis |
+| **Mensajería** | Apache Kafka 2.5/5.5.3 · Redis |
 | **Observabilidad** | OpenTelemetry · Grafana · Tempo · Pino · Sentry |
 | **Testing** | Jest · Supertest · Biome |
 | **DevOps** | Docker · Docker Compose |
@@ -279,16 +282,17 @@ Every transaction with a value greater than 1000 should be rejected.
 
 **Transaction Service (3000):**
 - `POST /transactions` - Crear transacción
-- `GET /transactions/:id` - Obtener transacción por ID
+- `GET /transactions/:transactionExternalId` - Obtener transacción por ID externo
 
 **Anti-Fraud Service (3001):**
+- Validación interna basada en reglas.
 
 **Eventos Kafka:**
 - `transaction-created` → `transaction-approved/rejected`
 
-You must have two resources:
+Se deben tener dos recursos principales:
 
-1. Resource to create a transaction that must containt:
+1. Recurso para crear una transacción que debe contener:
 
 ```json
 {
@@ -299,7 +303,7 @@ You must have two resources:
 }
 ```
 
-2. Resource to retrieve a transaction
+2. Recurso para recuperar una transacción:
 
 ```json
 {
@@ -315,20 +319,18 @@ You must have two resources:
 }
 ```
 
-## Optional
+## Opcionales (Consideraciones de Diseño)
 
-**High Volume Scenarios:**
-- **Write optimization**: Kafka para ingesta asíncrona, PostgreSQL con índices optimizados
-- **Read optimization**: Redis cache, read replicas, CQRS pattern
-- **Escalabilidad**: Microservicios independientes, stateless design
-
-**GraphQL**: No implementado en esta versión (REST API)
+**Escenarios de Alto Volumen:**
+- **Optimización de Escritura**: Kafka para ingesta asíncrona, PostgreSQL con índices optimizados.
+- **Optimización de Lectura**: Cache con Redis, réplicas de lectura, patrón CQRS.
+- **Escalabilidad**: Microservicios independientes, diseño sin estado (stateless).
 
 ---
 
-# Send us your challenge
+# Envíanos tu desafío
 
-When you finish your challenge, after forking a repository, you **must** open a pull request to our repository. There are no limitations to the implementation, you can follow the programming paradigm, modularization, and style that you feel is the most appropriate solution.
+Cuando termines tu desafío, después de hacer un fork del repositorio, **debes** abrir un pull request a nuestro repositorio. No hay limitaciones para la implementación, puedes seguir el paradigma de programación, la modularización y el estilo que sientas que es la solución más apropiada.
 
 If you have any questions, please let us know.
 
@@ -337,12 +339,11 @@ If you have any questions, please let us know.
 ## Notas de Implementación
 
 Implementación:
-- Cumple todos los requerimientos del challenge
-- Arquitectura hexagonal + DDD
-- Sistema de reglas anti-fraude extensible
-- Observabilidad con OpenTelemetry
-- Tests unitarios e integración
-- Documentación técnica
+- **Regla de Negocio**: Se cumple con la validación de transacciones > 1000. Aunque el requerimiento era un monto fijo, se implementó mediante un motor de reglas configurable para demostrar extensibilidad.
+- **Arquitectura**: Hexagonal + DDD.
+- **Extras**: Se incluyen reglas adicionales de forma demostrativa (blacklist, límites por tipo, etc.) para mostrar cómo el sistema puede evolucionar.
+- **Observabilidad**: Implementada con OpenTelemetry.
+- **Tests**: Unitarios e integración incluidos.
 
 **Próximos pasos:**
 1. Revisar [docs/INDEX.md](docs/INDEX.md) para documentación completa
