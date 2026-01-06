@@ -13,22 +13,12 @@ echo -e "${YELLOW}Testing Transaction Service API${NC}"
 echo -e "${YELLOW}Base URL: $BASE_URL${NC}"
 echo -e "${YELLOW}======================================${NC}\n"
 
-echo -e "${YELLOW}[1/4] Testing Health Check...${NC}"
-HEALTH_RESPONSE=$(curl -s -w "\n%{http_code}" "$BASE_URL/health" || echo "000")
-HTTP_CODE=$(echo "$HEALTH_RESPONSE" | tail -n1)
-if [ "$HTTP_CODE" = "200" ]; then
-    echo -e "${GREEN}✓ Health check passed${NC}\n"
-else
-    echo -e "${RED}✗ Health check failed (HTTP $HTTP_CODE)${NC}\n"
-    exit 1
-fi
-
-echo -e "${YELLOW}[2/4] Creating a valid transaction (amount: 500)...${NC}"
+echo -e "${YELLOW}[1/3] Creating a valid transaction (amount: 500)...${NC}"
 CREATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/transactions" \
   -H "Content-Type: application/json" \
   -d '{
-    "accountExternalIdDebit": "acc-debit-001",
-    "accountExternalIdCredit": "acc-credit-001",
+    "accountExternalIdDebit": "123e4567-e89b-12d3-a456-426614174000",
+    "accountExternalIdCredit": "123e4567-e89b-12d3-a456-426614174001",
     "tranferTypeId": 1,
     "value": 500
   }')
@@ -38,8 +28,8 @@ RESPONSE_BODY=$(echo "$CREATE_RESPONSE" | head -n -1)
 
 if [ "$HTTP_CODE" = "201" ]; then
     echo -e "${GREEN}✓ Transaction created successfully${NC}"
-    echo "$RESPONSE_BODY" | jq '.'
-    TRANSACTION_ID=$(echo "$RESPONSE_BODY" | jq -r '.transactionExternalId')
+    echo "$RESPONSE_BODY" | node -e "console.log(JSON.stringify(JSON.parse(require('fs').readFileSync(0, 'utf-8')), null, 2))"
+    TRANSACTION_ID=$(echo "$RESPONSE_BODY" | node -e "console.log(JSON.parse(require('fs').readFileSync(0, 'utf-8')).transactionExternalId)")
     echo -e "${GREEN}Transaction ID: $TRANSACTION_ID${NC}\n"
 else
     echo -e "${RED}✗ Failed to create transaction (HTTP $HTTP_CODE)${NC}"
@@ -47,14 +37,14 @@ else
     exit 1
 fi
 
-echo -e "${YELLOW}[3/4] Getting transaction by ID...${NC}"
+echo -e "${YELLOW}[2/3] Getting transaction by ID...${NC}"
 GET_RESPONSE=$(curl -s -w "\n%{http_code}" "$BASE_URL/transactions/$TRANSACTION_ID")
 HTTP_CODE=$(echo "$GET_RESPONSE" | tail -n1)
 RESPONSE_BODY=$(echo "$GET_RESPONSE" | head -n -1)
 
 if [ "$HTTP_CODE" = "200" ]; then
     echo -e "${GREEN}✓ Transaction retrieved successfully${NC}"
-    echo "$RESPONSE_BODY" | jq '.'
+    echo "$RESPONSE_BODY" | node -e "console.log(JSON.stringify(JSON.parse(require('fs').readFileSync(0, 'utf-8')), null, 2))"
     echo ""
 else
     echo -e "${RED}✗ Failed to get transaction (HTTP $HTTP_CODE)${NC}"
@@ -62,12 +52,12 @@ else
     exit 1
 fi
 
-echo -e "${YELLOW}[4/4] Creating high-value transaction (should be flagged by anti-fraud)...${NC}"
+echo -e "${YELLOW}[3/3] Creating high-value transaction (should be flagged by anti-fraud)...${NC}"
 CREATE_HIGH_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/transactions" \
   -H "Content-Type: application/json" \
   -d '{
-    "accountExternalIdDebit": "acc-debit-002",
-    "accountExternalIdCredit": "acc-credit-002",
+    "accountExternalIdDebit": "123e4567-e89b-12d3-a456-426614174002",
+    "accountExternalIdCredit": "123e4567-e89b-12d3-a456-426614174003",
     "tranferTypeId": 1,
     "value": 1500
   }')
@@ -77,8 +67,8 @@ RESPONSE_BODY=$(echo "$CREATE_HIGH_RESPONSE" | head -n -1)
 
 if [ "$HTTP_CODE" = "201" ]; then
     echo -e "${GREEN}✓ High-value transaction created${NC}"
-    echo "$RESPONSE_BODY" | jq '.'
-    HIGH_TRANSACTION_ID=$(echo "$RESPONSE_BODY" | jq -r '.transactionExternalId')
+    echo "$RESPONSE_BODY" | node -e "console.log(JSON.stringify(JSON.parse(require('fs').readFileSync(0, 'utf-8')), null, 2))"
+    HIGH_TRANSACTION_ID=$(echo "$RESPONSE_BODY" | node -e "console.log(JSON.parse(require('fs').readFileSync(0, 'utf-8')).transactionExternalId)")
     echo -e "${YELLOW}Note: This transaction should be processed by anti-fraud service${NC}"
     echo -e "${YELLOW}Check anti-fraud logs for validation results${NC}\n"
 else

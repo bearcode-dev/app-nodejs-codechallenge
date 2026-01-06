@@ -88,8 +88,8 @@ curl -X POST http://localhost:3000/transactions \
 ![Arquitectura](docs/diagrams/architecture-overview-jsoncrack.jpeg)
 
 ### Microservicios
-- **Transaction Service** (3000): Gestión de transacciones (CRUD + eventos Kafka)
-- **Anti-Fraud Service** (3001): Motor de reglas configurables + auditoría
+- **Transaction Service** (3000): Gestión de transacciones + eventos Kafka
+- **Anti-Fraud Service** (3001): Motor de reglas configurables (Umbral de monto prioritario) + auditoría
 
 ### Patrones Implementados
 - **Hexagonal Architecture**: Domain, Application, Infrastructure, Presentation
@@ -119,6 +119,7 @@ curl -X POST http://localhost:3000/transactions \
 | **[GUIDE.md](docs/GUIDE.md)** | Arquitectura hexagonal y patrones de diseño |
 | **[FRAUD_RULES.md](docs/FRAUD_RULES.md)** | Motor de reglas anti-fraude configurables |
 | **[API-TESTING.md](docs/API-TESTING.md)** | Guía de testing con curl y scripts |
+| **[Postman Collection](docs/collection/RETO%20YAPE.postman_collection.json)** | Colección de Postman para pruebas de API |
 
 ---
 
@@ -139,8 +140,8 @@ npm run test:e2e
 
 **Pruebas manuales con curl:**
 ```bash
-# Health check
-curl http://localhost:3000/health
+# Consultar transacción (Verificar estado)
+curl http://localhost:3000/transactions/{transactionExternalId}
 
 # Crear transacción
 curl -X POST http://localhost:3000/transactions \

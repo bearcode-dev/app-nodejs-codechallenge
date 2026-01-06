@@ -11,6 +11,7 @@ Documentación especializada del sistema de transacciones. Para inicio rápido, 
 | **[GUIDE.md](GUIDE.md)** | Arquitectura hexagonal, DDD, patrones de diseño |
 | **[FRAUD_RULES.md](FRAUD_RULES.md)** | Motor de reglas anti-fraude y gestión |
 | **[API-TESTING.md](API-TESTING.md)** | Guía completa de testing |
+| **[Postman Collection](collection/RETO%20YAPE.postman_collection.json)** | Colección oficial de Postman |
 
 ## Diagramas
 

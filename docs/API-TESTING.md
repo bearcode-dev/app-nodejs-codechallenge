@@ -16,11 +16,11 @@ docker-compose up -d
 npm run start:dev
 ```
 
-### 2. Verificar Servicios
+### 2. Verificar Logs de Servicios
 
 ```bash
-curl http://localhost:3000/health  # Transaction Service
-curl http://localhost:3001/health  # Anti-Fraud Service
+docker logs transaction-service -f
+docker logs anti-fraud-service -f
 ```
 
 ### 3. Ejecutar Test Automatizado
@@ -29,11 +29,16 @@ curl http://localhost:3001/health  # Anti-Fraud Service
 npm run test:api
 ```
 
+### 4. Postman
+
+También puedes importar la colección de Postman ubicada en:
+`docs/collection/RETO YAPE.postman_collection.json`
+
 ## Escenarios de Testing
 
 El script `test/api/test-transaction-api.sh` cubre:
 
-1. Health check del servicio
+1. Verificación de logs del servicio
 2. Crear transacción válida (< 1000)
 3. Consultar transacción por ID
 4. Crear transacción de alto valor (> 1000) para verificar anti-fraude
@@ -74,8 +79,8 @@ curl http://localhost:3000/transactions/{transaction-id}
 docker logs transaction-service -f
 docker logs anti-fraud-service -f
 
-# Curl verbose
-curl -v http://localhost:3000/health
+# Curl verbose (Verificar cabeceras)
+curl -v http://localhost:3000/transactions/{transaction-id}
 ```
 
 ## Troubleshooting
